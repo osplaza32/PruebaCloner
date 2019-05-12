@@ -30,6 +30,11 @@ type Folder struct {
 	Name string
 	Files []File
 	Path string
+	Id uuid.UUID
+	Created time.Time
+	Deleted time.Time
+
+
 }
 type WorkPlace struct {
 	ListnerFolder []Folder
@@ -66,8 +71,10 @@ func MakeVersion(created time.Time, bytes []byte) Version {
 }
 func (f *WorkPlace) MakeFileAndVersion(s string, created time.Time){
 	var Carpeta Folder
+	Carpeta.Id = uuid.New()
 	Carpeta.Name = Carpeta.GetFolderName(s)
 	Carpeta.Path = Carpeta.GetPath(s)
+	Carpeta.Created = created
 	Readfile, err := os.Open(s)
 	Utils.Check(err)
 	Carpeta.Files = append(Carpeta.Files, MakeFIrstFileAndVersion(Readfile,s))
@@ -93,8 +100,11 @@ func (f *WorkPlace) NewVersionInThisFile(uuids uuid.UUID, version Version) {
 	}
 func (f *WorkPlace) ChargeFilesInSystem(s string) {
 	var Carpeta Folder
+	Carpeta.Id = uuid.New()
 	Carpeta.Name = Carpeta.GetFolderName(s)
 	Carpeta.Path = s
+	Carpeta.Created = time.Now()
+
 	files, err := ioutil.ReadDir(s)
 	Utils.Check(err)
 	for _, file := range files {
@@ -125,6 +135,9 @@ func (f *Folder) GetPath(s string) string {
 	return Out
 	}
 
+func (f *Folder) new(s string, now time.Time) Folder {
+	return Folder{Created:now,Id:uuid.New(),Name:f.GetFolderName(s),Path:f.GetPath(s)}
+}
 
 func (f *WorkPlace) DisablesaAllOldVersion(uuids uuid.UUID) {
 	for idfolder,folder :=  range f.ListnerFolder{
@@ -141,6 +154,11 @@ func (f *WorkPlace) DisablesaAllOldVersion(uuids uuid.UUID) {
 		}
 	}
 }
+
+func (f *WorkPlace) AddFolder(s string, now time.Time) {
+	var Carpeta Folder
+	f.ListnerFolder = append(f.ListnerFolder,Carpeta.new(s,time.Now()))
+	}
 func MakeEntity(info os.FileInfo,Path string)File{
 	var file File
 	file.Name = info.Name()
